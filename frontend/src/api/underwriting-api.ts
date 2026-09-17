@@ -1,5 +1,5 @@
 import { apiRequest } from './api-client';
-import { CreditProfile, MortgageGoal, SimulationResponse } from './types';
+import { CreditProfile, MortgageGoal, PlanWithMilestones, SimulationResponse } from './types';
 
 export function fetchProfile(token: string): Promise<CreditProfile> {
   return apiRequest<CreditProfile>('/underwriting/profile', { token });
@@ -24,4 +24,16 @@ export function createSimulation(token: string, input: CreateSimulationInput): P
     token,
     body: input,
   });
+}
+
+export function createPlan(token: string, simulationId: string): Promise<PlanWithMilestones> {
+  return apiRequest<PlanWithMilestones>('/underwriting/plans', {
+    method: 'POST',
+    token,
+    body: { simulationId },
+  });
+}
+
+export function fetchPlan(token: string, planId: string): Promise<PlanWithMilestones> {
+  return apiRequest<PlanWithMilestones>(`/underwriting/plans/${planId}`, { token });
 }
