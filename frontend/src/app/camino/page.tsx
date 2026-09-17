@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ProtectedRoute } from '@/auth/protected-route';
 import { DiagnosticoPanel } from './diagnostico-panel';
 import { SimuladorPanel } from './simulador-panel';
+import { AgentPanel } from './agent-panel';
 import { buttonVariants } from '@/components/ui/button';
 import { SimulationResponse, CreditProfile, MortgageGoal } from '@/api/types';
 
@@ -25,6 +26,7 @@ export default function CaminoPage(): JSX.Element {
         <div className="mt-6">
           <DiagnosticoPanel onDiagnosed={setDiagnosis} />
         </div>
+        {diagnosis && <AgentPanel simulationId={diagnosis.simulation.id} />}
         {diagnosis && <SimuladorPanel baseline={diagnosis} onSimulated={setChosenSimulationId} />}
         {chosenSimulationId && (
           <Link
