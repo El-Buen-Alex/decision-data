@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ProtectedRoute } from '@/auth/protected-route';
 import { useAuth } from '@/auth/use-auth';
@@ -49,7 +49,11 @@ export default function NuevoPlanPage(): JSX.Element {
   return (
     <ProtectedRoute>
       <main className="mx-auto max-w-2xl px-4 py-10">
-        <CrearPlan />
+        {/* useSearchParams() obliga a Next.js 14 a tener un límite de Suspense
+            en el árbol; sin él, `next build` falla al prerenderizar esta ruta. */}
+        <Suspense fallback={<LoadingState label="Generando tu plan..." />}>
+          <CrearPlan />
+        </Suspense>
       </main>
     </ProtectedRoute>
   );
