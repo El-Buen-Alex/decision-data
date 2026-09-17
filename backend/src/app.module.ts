@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { envValidationSchema } from './config/env-validation.schema';
 import { DatabaseModule } from './database/database.module';
+import { RulesEngineModule } from './rules-engine/rules-engine.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { DatabaseModule } from './database/database.module';
       validationSchema: envValidationSchema,
     }),
     DatabaseModule,
+    RulesEngineModule,
   ],
   controllers: [AppController],
   providers: [AppService],
