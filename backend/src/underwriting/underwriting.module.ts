@@ -9,6 +9,7 @@ import { UnderwritingRuleParameter } from './entities/underwriting-rule-paramete
 import { RulesEngineModule } from '../rules-engine/rules-engine.module';
 import { AuthModule } from '../auth/auth.module';
 import { UnderwritingService } from './underwriting.service';
+import { PlanGeneratorService } from './plan-generator.service';
 import { UnderwritingController } from './underwriting.controller';
 
 @Module({
@@ -24,8 +25,8 @@ import { UnderwritingController } from './underwriting.controller';
     RulesEngineModule,
     AuthModule,
   ],
-  providers: [UnderwritingService],
+  providers: [UnderwritingService, PlanGeneratorService],
   controllers: [UnderwritingController],
-  exports: [UnderwritingService],
+  exports: [UnderwritingService, PlanGeneratorService],
 })
 export class UnderwritingModule {}
