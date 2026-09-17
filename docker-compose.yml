@@ -1,0 +1,39 @@
+# Levanta backend y frontend en Docker, conectados al Postgres que ya corre
+# vía infrastructure/docker-compose.yml (red externa infrastructure_default).
+#
+# Uso:
+#   cd infrastructure && docker compose up -d        # si Postgres no está arriba
+#   cd ..
+#   docker compose --env-file infrastructure/.env up -d --build
+
+services:
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    networks:
+      - infrastructure_default
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3001
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - infrastructure_default
+
+networks:
+  infrastructure_default:
+    external: true
