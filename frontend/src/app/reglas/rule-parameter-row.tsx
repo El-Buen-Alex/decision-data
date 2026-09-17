@@ -1,0 +1,50 @@
+'use client';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { RuleParameter } from '@/api/types';
+
+interface RuleParameterRowProps {
+  parameter: RuleParameter;
+  onSave: (key: string, value: number) => Promise<void>;
+}
+
+export function RuleParameterRow({ parameter, onSave }: RuleParameterRowProps): JSX.Element {
+  const [value, setValue] = useState(parameter.value);
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function handleSave(): Promise<void> {
+    setIsSaving(true);
+    try {
+      await onSave(parameter.key, Number(value));
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-b border-fg-2/20 py-3">
+      <div>
+        <p className="font-medium">{parameter.key}</p>
+        <p className="text-sm text-fg-2">{parameter.description}</p>
+        <p className="text-xs text-fg-2/70">Fuente: {parameter.source}</p>
+      </div>
+
+      <label htmlFor={`value-${parameter.key}`} className="sr-only">
+        Valor de {parameter.key}
+      </label>
+      <Input
+        id={`value-${parameter.key}`}
+        aria-label={`Valor de ${parameter.key}`}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className="w-28"
+      />
+
+      <Button onClick={handleSave} disabled={isSaving}>
+        {isSaving ? 'Guardando...' : 'Guardar'}
+      </Button>
+    </div>
+  );
+}
