@@ -705,10 +705,10 @@ export class Simulation {
   mortgageGoalId!: string;
 
   @Column('jsonb')
-  inputs!: Record<string, number>;
+  inputs!: Record<string, unknown>;
 
   @Column('jsonb')
-  outputs!: Record<string, number | string>;
+  outputs!: Record<string, unknown>;
 
   @Column('jsonb', { name: 'rule_snapshot' })
   ruleSnapshot!: Record<string, number>;
@@ -3201,7 +3201,7 @@ async getSimulationById(userId: string, simulationId: string): Promise<Simulatio
   if (!simulation) {
     throw new NotFoundException('No existe esa simulación para este usuario.');
   }
-  const outputs = simulation.outputs as Record<string, number | string>;
+  const outputs = simulation.outputs as Record<string, unknown>;
   return {
     id: simulation.id,
     scoreBand: outputs.scoreBand as SimulationResponse['scoreBand'],
@@ -3211,7 +3211,7 @@ async getSimulationById(userId: string, simulationId: string): Promise<Simulatio
     monthlyPayment: outputs.monthlyPayment as number,
     approvalPercentage: outputs.approvalPercentage as number,
     approvalCategory: outputs.approvalCategory as SimulationResponse['approvalCategory'],
-    qualifiesToday: outputs.qualifiesToday as boolean as unknown as boolean,
+    qualifiesToday: outputs.qualifiesToday as boolean,
     createdAt: simulation.createdAt,
   };
 }
@@ -3290,7 +3290,7 @@ Expected: PASS (1 test)
 
 ```typescript
 import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
@@ -3301,7 +3301,7 @@ interface AuthenticatedRequest extends Request {
   user: AuthenticatedUser;
 }
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, ThrottlerGuard)
 @Throttle({ default: { limit: 20, ttl: 60000 } })
 @Controller('agent')
 export class AgentController {
