@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AgentModule } from './agent/agent.module';
 import { AuthModule } from './auth/auth.module';
 import { envValidationSchema } from './config/env-validation.schema';
 import { DatabaseModule } from './database/database.module';
@@ -18,6 +19,7 @@ import { UnderwritingModule } from './underwriting/underwriting.module';
     RulesEngineModule,
     AuthModule,
     UnderwritingModule,
+    AgentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

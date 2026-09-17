@@ -92,6 +92,28 @@ export class UnderwritingService {
     };
   }
 
+  async getSimulationById(userId: string, simulationId: string): Promise<SimulationResponse> {
+    const simulation = await this.simulationRepository.findOne({
+      where: { id: simulationId, userId },
+    });
+    if (!simulation) {
+      throw new NotFoundException('No existe esa simulación para este usuario.');
+    }
+    const outputs = simulation.outputs as Record<string, unknown>;
+    return {
+      id: simulation.id,
+      scoreBand: outputs.scoreBand as SimulationResponse['scoreBand'],
+      housingDtiRatio: outputs.housingDtiRatio as number,
+      totalDtiRatio: outputs.totalDtiRatio as number,
+      ltv: outputs.ltv as number,
+      monthlyPayment: outputs.monthlyPayment as number,
+      approvalPercentage: outputs.approvalPercentage as number,
+      approvalCategory: outputs.approvalCategory as SimulationResponse['approvalCategory'],
+      qualifiesToday: outputs.qualifiesToday as boolean,
+      createdAt: simulation.createdAt,
+    };
+  }
+
   async listSimulations(userId: string): Promise<Simulation[]> {
     return this.simulationRepository.find({
       where: { userId },
