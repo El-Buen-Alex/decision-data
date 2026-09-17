@@ -1,99 +1,75 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Decision Data Ruta — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST en NestJS: motor de reglas de elegibilidad hipotecaria, autenticación, endpoints de simulación/plan/hitos, panel de reglas en vivo, y el agente de IA de solo-ayuda.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Diseño completo: [`docs/superpowers/specs/2026-09-16-decision-data-ruta-design.md`](../docs/superpowers/specs/2026-09-16-decision-data-ruta-design.md).
 
-## Description
+## Prerrequisitos
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- Node.js 20+ (probado con 22.x)
+- Docker + Docker Compose (para Postgres)
+- Una API key de Anthropic válida (para el endpoint `/agent/explain`; el resto de la API funciona sin ella)
 
-## Project setup
+## Instalación y ejecución
+
+Desde la raíz del repo:
 
 ```bash
-$ npm install
+# 1. Levantar Postgres
+cd infrastructure
+cp .env.example .env
+docker compose up -d
+
+# 2. Configurar y arrancar el backend
+cd ../backend
+cp .env.example .env
+# Editar .env: reemplazar ANTHROPIC_API_KEY por una key real de Anthropic
+npm install
+npm run migration:run
+npm run seed
+npm run start:dev
 ```
 
-## Compile and run the project
+La API queda en `http://localhost:3001`.
+
+## Pruebas
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm test
 ```
 
-## Run tests
+## Credenciales de la demo
+
+El seed crea una persona sintética, "Ana", que hoy **no calificaría** para el crédito hipotecario que busca (score y DTI insuficientes):
+
+- Email: `ana.demo@decisiondata.test`
+- Password: `demo1234`
+
+Login:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+curl -X POST http://localhost:3001/auth/login \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"ana.demo@decisiondata.test\",\"password\":\"demo1234\"}"
 ```
 
-## Deployment
+## Recorrido de demostración (endpoints)
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+1. `POST /auth/login` → token JWT.
+2. `GET /underwriting/profile`, `GET /underwriting/goal` → situación actual de Ana.
+3. `POST /underwriting/simulations` → simula un escenario (motor de reglas, determinista).
+4. `POST /agent/explain` → el agente narra el resultado de una simulación (requiere `ANTHROPIC_API_KEY` real).
+5. `POST /underwriting/plans` → genera un plan de hitos a partir de una simulación.
+6. `GET /underwriting/plans/:id` → plan con sus hitos.
+7. `GET /underwriting/rule-parameters` / `PATCH /underwriting/rule-parameters/:key` → panel de reglas en vivo: cambia un parámetro (p. ej. `MAX_HOUSING_DTI_RATIO`) y una nueva simulación refleja el cambio de inmediato, sin tocar código.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Sobre el modelo de aprobación y las bandas de score
 
-```bash
-$ npm install -g mau
-$ mau deploy
-```
+El sistema de puntos que calcula la "probabilidad de aprobación" (`backend/src/rules-engine/calculators/approval-probability.scorer.ts`) y las bandas de score (`score-band.classifier.ts`) son **ilustrativos**, construidos para esta demo — no son el modelo real de riesgo de Decision Data (que usaría algo como SHAP/XGBoost entrenado con datos reales), ni las bandas oficiales de ningún buró. Los parámetros con datos reales investigados (tasas hipotecarias, DTI/LTV máximos, plazos) están documentados con su fuente en la sección 4.1 del documento de diseño y en cada fila de `underwriting_rule_parameters` (columna `source`).
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Limitaciones conocidas
 
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- Solo `POST /agent/explain` está implementado. `/agent/ask` (preguntas libres del usuario) y `/agent/plan` (redacción del plan) fueron deliberadamente dejados como trabajo futuro una vez que el patrón completo (context builder → plantilla LLM → resolutor anti-alucinación → log) quedó probado end-to-end con `/explain` — extenderlos es repetir el mismo patrón con un prompt distinto.
+- El modelo de aprobación y las bandas de score son ilustrativos (ver sección anterior), no el motor de riesgo real de Decision Data.
+- Sin integración real con bancos, BIESS o el buró real de Decision Data — todos los datos de crédito son sintéticos.
+- El agente depende de un proveedor LLM externo (Anthropic); no hay fallback si el proveedor falla.
