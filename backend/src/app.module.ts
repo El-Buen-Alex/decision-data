@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { envValidationSchema } from './config/env-validation.schema';
 import { DatabaseModule } from './database/database.module';
 import { RulesEngineModule } from './rules-engine/rules-engine.module';
+import { UnderwritingModule } from './underwriting/underwriting.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RulesEngineModule } from './rules-engine/rules-engine.module';
     DatabaseModule,
     RulesEngineModule,
     AuthModule,
+    UnderwritingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

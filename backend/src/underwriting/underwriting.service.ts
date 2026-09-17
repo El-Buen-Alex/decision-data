@@ -1,0 +1,98 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CreditProfile } from './entities/credit-profile.entity';
+import { MortgageGoal, PropertyType } from './entities/mortgage-goal.entity';
+import { Simulation } from './entities/simulation.entity';
+import { RulesEngineService } from '../rules-engine/rules-engine.service';
+import { CreateSimulationDto } from './dto/create-simulation.dto';
+import { SimulationResponse } from './interfaces/simulation-response.interface';
+
+@Injectable()
+export class UnderwritingService {
+  constructor(
+    @InjectRepository(CreditProfile)
+    private readonly creditProfileRepository: Repository<CreditProfile>,
+    @InjectRepository(MortgageGoal)
+    private readonly mortgageGoalRepository: Repository<MortgageGoal>,
+    @InjectRepository(Simulation)
+    private readonly simulationRepository: Repository<Simulation>,
+    private readonly rulesEngineService: RulesEngineService,
+  ) {}
+
+  async getProfile(userId: string): Promise<CreditProfile> {
+    const profile = await this.creditProfileRepository.findOne({
+      where: { userId },
+    });
+    if (!profile) {
+      throw new NotFoundException(
+        'No existe un perfil de crédito para este usuario.',
+      );
+    }
+    return profile;
+  }
+
+  async getGoal(userId: string): Promise<MortgageGoal> {
+    const goal = await this.mortgageGoalRepository.findOne({
+      where: { userId },
+    });
+    if (!goal) {
+      throw new NotFoundException(
+        'No existe una meta hipotecaria para este usuario.',
+      );
+    }
+    return goal;
+  }
+
+  async createSimulation(
+    userId: string,
+    dto: CreateSimulationDto,
+  ): Promise<SimulationResponse> {
+    const profile = await this.getProfile(userId);
+    const goal = await this.getGoal(userId);
+    const isVisEligible =
+      dto.isVisEligible ?? goal.propertyType === PropertyType.VIS;
+
+    const output = await this.rulesEngineService.runSimulation({
+      score: dto.projectedScore,
+      existingMonthlyDebt: dto.adjustedExistingMonthlyDebt,
+      monthlyIncome: dto.adjustedMonthlyIncome,
+      incomeType: profile.incomeType,
+      monthsEmployed: profile.monthsEmployed,
+      recentDelinquency: profile.recentDelinquency,
+      propertyValue: dto.adjustedPropertyValue,
+      loanAmount: dto.adjustedLoanAmount,
+      isVisEligible,
+    });
+
+    const savedSimulation = await this.simulationRepository.save(
+      this.simulationRepository.create({
+        userId,
+        mortgageGoalId: goal.id,
+        inputs: { ...dto },
+        outputs: { ...output },
+        ruleSnapshot: output.ruleSnapshot,
+      }),
+    );
+
+    return {
+      id: savedSimulation.id,
+      scoreBand: output.scoreBand,
+      housingDtiRatio: output.housingDtiRatio,
+      totalDtiRatio: output.totalDtiRatio,
+      ltv: output.ltv,
+      monthlyPayment: output.monthlyPayment,
+      approvalPercentage: output.approvalPercentage,
+      approvalCategory: output.approvalCategory,
+      qualifiesToday: output.qualifiesToday,
+      createdAt: savedSimulation.createdAt,
+    };
+  }
+
+  async listSimulations(userId: string): Promise<Simulation[]> {
+    return this.simulationRepository.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
+  }
+}
