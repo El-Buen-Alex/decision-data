@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Decision Data Ruta — Frontend
 
-## Getting Started
+Recorrido en Next.js: diagnóstico → simulador → plan de hitos → checklist final, con un panel de reglas en vivo y el panel del agente de IA. Consume la API del backend (`../backend`) a través de un cliente tipado propio — sin código compartido entre subproyectos.
 
-First, run the development server:
+Diseño completo: [`docs/superpowers/specs/2026-09-16-decision-data-ruta-design.md`](../docs/superpowers/specs/2026-09-16-decision-data-ruta-design.md).
+
+## Prerrequisitos
+
+- Node.js 20+
+- El backend corriendo en `http://localhost:3001` (ver `../backend/README.md`) para cualquier verificación con datos reales
+
+## Instalación y ejecución
 
 ```bash
+cd frontend
+cp .env.local.example .env.local
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+La app queda en `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Pruebas
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm test
+```
 
-## Learn More
+## Recorrido de demostración
 
-To learn more about Next.js, take a look at the following resources:
+1. `/login` — inicia sesión con la persona demo (`ana.demo@decisiondata.test` / `demo1234`).
+2. `/camino` — diagnóstico actual ("hoy no calificarías" con los números reales de Ana), simulador de escenarios embebido, y el panel del asesor de IA explicando el resultado.
+3. `/plan/[id]` — al elegir un escenario que sí califica, el plan de hitos generado (fechas y métricas reales del motor de reglas).
+4. `/reglas` — panel de administración: edita un parámetro (p. ej. `MAX_HOUSING_DTI_RATIO`) y confirma que una nueva simulación en `/camino` refleja el cambio de inmediato, sin tocar código.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Identidad de marca
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+La paleta de color (tema "midnight") y el logo se obtuvieron directamente de `https://decisiondata.ec/assets/styles.css` y `https://decisiondata.ec/assets/dd-lockup-white.png` / `dd-icon.png` — verificados en vivo contra el sitio real, no inventados. Ver `src/app/globals.css` y `public/brand/`.
 
-## Deploy on Vercel
+## Limitaciones conocidas
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- El verificado manual end-to-end completo (login → diagnóstico → simulador → plan → edición de regla en vivo → explicación del agente con un LLM real) no pudo ejecutarse en este entorno de desarrollo: Docker Desktop no estaba disponible para levantar Postgres/el backend, y `backend/.env` todavía tiene un `ANTHROPIC_API_KEY` de placeholder. La cobertura de tests unitarios (Jest + React Testing Library, mockeando la API) y una verificación campo por campo del contrato de cada endpoint contra el código real del backend sustituyeron esa verificación en vivo. Antes de la entrega, se recomienda levantar `docker compose up -d` en `../infrastructure`, correr el backend, poner una API key real de Anthropic, y hacer el recorrido completo una vez en un navegador real.
+- Igual que el backend, `/agent/ask` y `/agent/plan` no están implementados — solo `/agent/explain`.
