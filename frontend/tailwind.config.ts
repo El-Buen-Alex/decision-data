@@ -14,8 +14,12 @@ const config: Config = {
         fg: "var(--fg)",
         "fg-2": "var(--fg-2)",
         accent: "var(--accent)",
+        "accent-2": "var(--accent-2)",
         positive: "var(--positive)",
         negative: "var(--negative)",
+        // Tono translúcido premezclado: Tailwind v3 descarta `bg-negative/10`
+        // sobre un color declarado como `var(--negative)`.
+        "negative-tint": "var(--negative-tint)",
         info: "var(--info)",
         // shadcn/ui component tokens (Button, Input, Card), mapped onto the
         // existing midnight brand palette above rather than a separate theme.

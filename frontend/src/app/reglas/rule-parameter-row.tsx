@@ -37,12 +37,12 @@ export function RuleParameterRow({ parameter, onSave }: RuleParameterRowProps): 
   }
 
   return (
-    <div className="border-b border-fg-2/20 py-3">
+    <div className="border-b border-border py-3">
       <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3">
         <div>
           <p className="font-medium">{parameter.key}</p>
           <p className="text-sm text-fg-2">{parameter.description}</p>
-          <p className="text-xs text-fg-2/70">Fuente: {parameter.source}</p>
+          <p className="text-xs text-muted-foreground">Fuente: {parameter.source}</p>
         </div>
 
         <label htmlFor={`value-${parameter.key}`} className="sr-only">

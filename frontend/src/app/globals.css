@@ -27,10 +27,18 @@
   --positive: var(--teal);
   --negative: var(--red);
   --info: var(--blue);
+
+  /* Tailwind v3 no puede aplicar el modificador de opacidad (`bg-negative/10`)
+     a colores declarados como `var(--x)`: la clase se descarta en silencio. Los
+     tonos translúcidos que sí necesitamos se premezclan aquí y se exponen como
+     tokens propios en tailwind.config.ts. */
+  --negative-tint: rgba(239, 68, 68, 0.12);
 }
 
 body {
   background: var(--bg);
   color: var(--fg);
-  font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  /* next/font/google auto-hospeda la fuente bajo un nombre de familia generado;
+     el único identificador estable es esta variable CSS. */
+  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
 }

@@ -38,7 +38,7 @@ export function AgentPanel({ simulationId }: { simulationId: string }): JSX.Elem
   return (
     <aside
       aria-label="Panel del asesor de IA"
-      className="mt-6 rounded-xl border border-accent/40 bg-bg-2 p-4"
+      className="mt-6 rounded-xl border border-accent bg-muted p-4"
     >
       <p className="text-sm font-medium text-accent">Asesor</p>
       {isLoading && <LoadingState label="El asesor está preparando la explicación..." />}
