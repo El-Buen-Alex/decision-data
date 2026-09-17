@@ -80,6 +80,7 @@ export class UnderwritingService {
 
     return {
       id: savedSimulation.id,
+      score: dto.projectedScore,
       scoreBand: output.scoreBand,
       housingDtiRatio: output.housingDtiRatio,
       totalDtiRatio: output.totalDtiRatio,
@@ -99,9 +100,25 @@ export class UnderwritingService {
     if (!simulation) {
       throw new NotFoundException('No existe esa simulación para este usuario.');
     }
+    return this.toSimulationResponse(simulation);
+  }
+
+  async listSimulations(userId: string): Promise<SimulationResponse[]> {
+    const simulations = await this.simulationRepository.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
+    return simulations.map((simulation) => this.toSimulationResponse(simulation));
+  }
+
+  // Mapea una simulación persistida a la misma forma plana que devuelve createSimulation,
+  // para que POST y GET de simulaciones expongan un contrato idéntico.
+  private toSimulationResponse(simulation: Simulation): SimulationResponse {
     const outputs = simulation.outputs as Record<string, unknown>;
+    const inputs = simulation.inputs as Record<string, unknown>;
     return {
       id: simulation.id,
+      score: inputs.projectedScore as number,
       scoreBand: outputs.scoreBand as SimulationResponse['scoreBand'],
       housingDtiRatio: outputs.housingDtiRatio as number,
       totalDtiRatio: outputs.totalDtiRatio as number,
@@ -112,13 +129,6 @@ export class UnderwritingService {
       qualifiesToday: outputs.qualifiesToday as boolean,
       createdAt: simulation.createdAt,
     };
-  }
-
-  async listSimulations(userId: string): Promise<Simulation[]> {
-    return this.simulationRepository.find({
-      where: { userId },
-      order: { createdAt: 'DESC' },
-    });
   }
 
   async listRuleParameters(): Promise<UnderwritingRuleParameter[]> {

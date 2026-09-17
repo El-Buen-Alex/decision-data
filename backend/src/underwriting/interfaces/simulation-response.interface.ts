@@ -3,6 +3,9 @@ import { ApprovalCategory } from '../../rules-engine/calculators/approval-probab
 
 export interface SimulationResponse {
   id: string;
+  // Score proyectado con el que se calculó esta simulación (dto.projectedScore),
+  // no el score almacenado en el perfil: la simulación es un escenario "qué pasaría si".
+  score: number;
   scoreBand: ScoreBand;
   housingDtiRatio: number;
   totalDtiRatio: number;
