@@ -2647,7 +2647,7 @@ git commit -m "feat: add admin endpoints to view and edit rule parameters live"
 
 **Interfaces:**
 - Consumes: `Simulation` entity (Task 5), `SimulationOutput` shape (Task 11).
-- Produces: `PlanGeneratorService.generateFromSimulation(userId, simulationId): Promise<Plan>` with populated `Milestone[]` (dates/targets computed, `description` left `null` for the agent to fill in Task 18-20's endpoint), exposed via `POST /underwriting/plans`.
+- Produces: `PlanGeneratorService.generateFromSimulation(userId, simulationId): Promise<PlanWithMilestones>` and `PlanGeneratorService.getPlanWithMilestones(userId, planId): Promise<PlanWithMilestones>`, exposed via `POST /underwriting/plans` and `GET /underwriting/plans/:id`. `PlanWithMilestones` is `{ plan: Plan; milestones: Milestone[] }` — the frontend plan/hitos screen (Plan B) depends on this exact shape, including after a page reload.
 
 - [ ] **Step 1: Write the create-plan DTO**
 
@@ -2692,7 +2692,7 @@ describe('PlanGeneratorService', () => {
         },
         {
           provide: getRepositoryToken(Milestone),
-          useValue: { save: saveMilestonesMock, create: (v: unknown) => v },
+          useValue: { save: saveMilestonesMock, create: (v: unknown) => v, find: jest.fn() },
         },
       ],
     }).compile();
@@ -2717,13 +2717,12 @@ describe('PlanGeneratorService', () => {
     savePlanMock.mockImplementation(async (entity) => ({ id: 'plan-1', ...entity }));
     saveMilestonesMock.mockImplementation(async (entities) => entities);
 
-    const plan = await service.generateFromSimulation('user-1', 'sim-1');
+    const result = await service.generateFromSimulation('user-1', 'sim-1');
 
-    expect(plan.id).toBe('plan-1');
+    expect(result.plan.id).toBe('plan-1');
+    expect(result.milestones).toHaveLength(3);
+    expect(result.milestones[0].sequenceNumber).toBe(1);
     expect(saveMilestonesMock).toHaveBeenCalledTimes(1);
-    const savedMilestones = saveMilestonesMock.mock.calls[0][0];
-    expect(savedMilestones).toHaveLength(3);
-    expect(savedMilestones[0].sequenceNumber).toBe(1);
   });
 });
 ```
@@ -2745,6 +2744,11 @@ import { Simulation } from './entities/simulation.entity';
 import { Plan } from './entities/plan.entity';
 import { Milestone } from './entities/milestone.entity';
 
+export interface PlanWithMilestones {
+  plan: Plan;
+  milestones: Milestone[];
+}
+
 @Injectable()
 export class PlanGeneratorService {
   constructor(
@@ -2756,7 +2760,7 @@ export class PlanGeneratorService {
     private readonly milestoneRepository: Repository<Milestone>,
   ) {}
 
-  async generateFromSimulation(userId: string, simulationId: string): Promise<Plan> {
+  async generateFromSimulation(userId: string, simulationId: string): Promise<PlanWithMilestones> {
     const simulation = await this.simulationRepository.findOne({
       where: { id: simulationId, userId },
     });
@@ -2769,7 +2773,7 @@ export class PlanGeneratorService {
     );
 
     const milestoneDefinitions = this.buildMilestoneDefinitions(simulation);
-    const milestones = milestoneDefinitions.map((definition, index) =>
+    const milestonesToSave = milestoneDefinitions.map((definition, index) =>
       this.milestoneRepository.create({
         planId: savedPlan.id,
         sequenceNumber: index + 1,
@@ -2780,9 +2784,23 @@ export class PlanGeneratorService {
       }),
     );
 
-    await this.milestoneRepository.save(milestones);
+    const savedMilestones = await this.milestoneRepository.save(milestonesToSave);
 
-    return savedPlan;
+    return { plan: savedPlan, milestones: savedMilestones };
+  }
+
+  async getPlanWithMilestones(userId: string, planId: string): Promise<PlanWithMilestones> {
+    const plan = await this.planRepository.findOne({ where: { id: planId, userId } });
+    if (!plan) {
+      throw new NotFoundException('No existe ese plan para este usuario.');
+    }
+
+    const milestones = await this.milestoneRepository.find({
+      where: { planId: plan.id },
+      order: { sequenceNumber: 'ASC' },
+    });
+
+    return { plan, milestones };
   }
 
   private buildMilestoneDefinitions(simulation: Simulation): {
@@ -2817,14 +2835,19 @@ export class PlanGeneratorService {
 Run: `cd backend && npx jest plan-generator.service.spec.ts`
 Expected: PASS (2 tests)
 
-- [ ] **Step 6: Wire the endpoint**
+- [ ] **Step 6: Wire the endpoints**
 
-Add to `backend/src/underwriting/underwriting.controller.ts` (inject `PlanGeneratorService` in the constructor alongside `UnderwritingService`):
+Add to `backend/src/underwriting/underwriting.controller.ts` (inject `PlanGeneratorService` in the constructor alongside `UnderwritingService`; add `Param` to the existing `@nestjs/common` import):
 
 ```typescript
 @Post('plans')
 createPlan(@Req() request: AuthenticatedRequest, @Body() dto: CreatePlanDto) {
   return this.planGeneratorService.generateFromSimulation(request.user.userId, dto.simulationId);
+}
+
+@Get('plans/:id')
+getPlan(@Req() request: AuthenticatedRequest, @Param('id') id: string) {
+  return this.planGeneratorService.getPlanWithMilestones(request.user.userId, id);
 }
 ```
 
