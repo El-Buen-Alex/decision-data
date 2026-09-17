@@ -28,6 +28,7 @@ export function MilestoneTimeline({ milestones }: { milestones: Milestone[] }): 
       {milestones.map((milestone) => {
         const description = milestone.description ?? describeMilestone(milestone);
         const formattedDate = formatLongDate(milestone.targetDate);
+        const isDone = milestone.status === 'done';
 
         return (
           <li key={milestone.id} className="rounded-lg bg-surface p-4">
@@ -35,6 +36,11 @@ export function MilestoneTimeline({ milestones }: { milestones: Milestone[] }): 
               Hito {milestone.sequenceNumber} · {formattedDate}
             </p>
             <p className="mt-1">{description}</p>
+            <p className={`mt-1 text-sm font-medium ${isDone ? 'text-green-600' : 'text-fg-2'}`}>
+              {isDone && milestone.completedAt
+                ? `Cumplido · ${formatLongDate(milestone.completedAt)}`
+                : 'Pendiente'}
+            </p>
           </li>
         );
       })}

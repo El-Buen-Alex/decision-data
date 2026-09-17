@@ -4,17 +4,19 @@ import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/auth/protected-route';
 import { AppHeader } from '@/components/nav/app-header';
 import { useAuth } from '@/auth/use-auth';
-import { fetchPlan } from '@/api/underwriting-api';
-import { PlanWithMilestones } from '@/api/types';
+import { fetchGoal, fetchPlan, fetchProfile } from '@/api/underwriting-api';
+import { CreditProfile, MortgageGoal, PlanCheckInResponse, PlanWithMilestones } from '@/api/types';
 import { ApiError } from '@/api/api-error';
 import { LoadingState } from '@/components/state/loading-state';
 import { ErrorState } from '@/components/state/error-state';
 import { MilestoneTimeline } from './milestone-timeline';
 import { ChecklistFinal } from './checklist-final';
+import { CheckInForm } from './check-in-form';
 
 function PlanDetail({ planId }: { planId: string }): JSX.Element {
   const { token } = useAuth();
   const [data, setData] = useState<PlanWithMilestones | null>(null);
+  const [baseline, setBaseline] = useState<{ profile: CreditProfile; goal: MortgageGoal } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,14 +32,23 @@ function PlanDetail({ planId }: { planId: string }): JSX.Element {
     setErrorMessage(null);
 
     try {
-      const result = await fetchPlan(token, planId);
-      setData(result);
+      const [plan, profile, goal] = await Promise.all([
+        fetchPlan(token, planId),
+        fetchProfile(token),
+        fetchGoal(token),
+      ]);
+      setData(plan);
+      setBaseline({ profile, goal });
     } catch (error) {
       const message = error instanceof ApiError ? error.message : 'No se pudo cargar el plan.';
       setErrorMessage(message);
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function handleCheckedIn(result: PlanCheckInResponse): void {
+    setData({ plan: result.plan, milestones: result.milestones });
   }
 
   if (isLoading) {
@@ -50,15 +61,22 @@ function PlanDetail({ planId }: { planId: string }): JSX.Element {
     return <ErrorState message="Este plan todavía no tiene hitos." />;
   }
 
-  const allMilestonesDone = data.milestones.every((milestone) => milestone.status === 'done');
+  const doneCount = data.milestones.filter((milestone) => milestone.status === 'done').length;
+  const allMilestonesDone = doneCount === data.milestones.length;
 
   return (
     <>
       <h1 className="text-2xl font-semibold">Tu plan hacia el crédito hipotecario</h1>
+      <p className="mt-2 text-sm text-fg-2">
+        {doneCount}/{data.milestones.length} hitos cumplidos
+      </p>
       <div className="mt-6">
         <MilestoneTimeline milestones={data.milestones} />
       </div>
       {allMilestonesDone && <ChecklistFinal />}
+      {!allMilestonesDone && baseline && (
+        <CheckInForm planId={planId} baseline={baseline} onCheckedIn={handleCheckedIn} />
+      )}
     </>
   );
 }

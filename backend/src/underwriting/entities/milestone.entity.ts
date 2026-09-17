@@ -45,4 +45,7 @@ export class Milestone {
     default: MilestoneStatus.PENDING,
   })
   status!: MilestoneStatus;
+
+  @Column('timestamp', { name: 'completed_at', nullable: true })
+  completedAt!: Date | null;
 }

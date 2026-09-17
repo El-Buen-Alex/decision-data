@@ -59,9 +59,14 @@ export interface Milestone {
   targetValue: string;
   targetDate: string;
   status: 'pending' | 'done';
+  completedAt: string | null;
 }
 
 export interface PlanWithMilestones {
   plan: { id: string; status: 'active' | 'completed'; createdAt: string };
   milestones: Milestone[];
+}
+
+export interface PlanCheckInResponse extends PlanWithMilestones {
+  simulation: SimulationResponse;
 }

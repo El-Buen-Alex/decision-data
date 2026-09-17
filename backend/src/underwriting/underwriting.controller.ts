@@ -62,4 +62,13 @@ export class UnderwritingController {
   getPlan(@Req() request: AuthenticatedRequest, @Param('id') id: string) {
     return this.planGeneratorService.getPlanWithMilestones(request.user.userId, id);
   }
+
+  @Post('plans/:id/check-in')
+  checkIn(
+    @Req() request: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: CreateSimulationDto,
+  ) {
+    return this.planGeneratorService.checkIn(request.user.userId, id, dto);
+  }
 }

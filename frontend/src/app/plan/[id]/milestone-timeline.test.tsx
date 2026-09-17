@@ -12,6 +12,7 @@ const milestones: Milestone[] = [
     targetValue: '0.40',
     targetDate: '2026-11-16',
     status: 'pending',
+    completedAt: null,
   },
   {
     id: 'm2',
@@ -21,6 +22,7 @@ const milestones: Milestone[] = [
     targetValue: '0.80',
     targetDate: '2027-02-16',
     status: 'pending',
+    completedAt: null,
   },
   {
     id: 'm3',
@@ -30,6 +32,7 @@ const milestones: Milestone[] = [
     targetValue: '1.00',
     targetDate: '2027-05-16',
     status: 'pending',
+    completedAt: null,
   },
 ];
 
@@ -49,5 +52,21 @@ describe('MilestoneTimeline', () => {
     render(<MilestoneTimeline milestones={milestones} />);
 
     expect(screen.getByText(/Hito 1 · 16 de noviembre de 2026/)).toBeInTheDocument();
+  });
+
+  it('shows a pending milestone as not yet achieved', () => {
+    render(<MilestoneTimeline milestones={milestones} />);
+
+    expect(screen.getAllByText('Pendiente')).toHaveLength(3);
+  });
+
+  it('shows a done milestone with the real date it was achieved instead of the target date', () => {
+    const doneMilestones: Milestone[] = [
+      { ...milestones[0], status: 'done', completedAt: '2026-10-01' },
+    ];
+    render(<MilestoneTimeline milestones={doneMilestones} />);
+
+    expect(screen.getByText('Cumplido · 1 de octubre de 2026')).toBeInTheDocument();
+    expect(screen.queryByText('Pendiente')).not.toBeInTheDocument();
   });
 });
