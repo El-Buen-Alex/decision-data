@@ -2,6 +2,11 @@ module.exports = {
   testEnvironment: 'jsdom',
   preset: 'ts-jest',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  moduleNameMapper: {
+    // Mirrors the "@/*" path alias from tsconfig.json, which ts-jest does not
+    // resolve on its own.
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
   transform: {
     // tsconfig.json sets jsx: "preserve" for Next.js' own SWC pipeline, which
     // ts-jest never runs, so tests get raw JSX syntax. Override to react-jsx

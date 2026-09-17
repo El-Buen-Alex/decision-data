@@ -1,0 +1,47 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { SimuladorPanel } from './simulador-panel';
+
+jest.mock('@/auth/use-auth', () => ({ useAuth: () => ({ token: 'fake-token' }) }));
+jest.mock('@/api/underwriting-api', () => ({
+  createSimulation: jest.fn().mockResolvedValue({
+    id: 'sim-2',
+    housingDtiRatio: 0.3,
+    ltv: 0.75,
+    approvalPercentage: 70,
+    approvalCategory: 'medium',
+    qualifiesToday: true,
+    monthlyPayment: 400,
+    scoreBand: 'good',
+    createdAt: new Date().toISOString(),
+  }),
+}));
+
+const baseline = {
+  profile: {
+    id: 'p1',
+    score: 640,
+    cardUtilizationPercent: '78',
+    monthlyIncome: '1200',
+    incomeType: 'formal' as const,
+    monthsEmployed: 18,
+    recentDelinquency: false,
+    existingMonthlyDebt: '310',
+  },
+  goal: { id: 'g1', propertyValue: '85000', propertyType: 'vis' as const, desiredLoanAmount: '76500' },
+};
+
+describe('SimuladorPanel', () => {
+  it('shows the recalculated qualification after adjusting existing debt', async () => {
+    const onSimulated = jest.fn();
+    render(<SimuladorPanel baseline={baseline} onSimulated={onSimulated} />);
+
+    const debtInput = screen.getByLabelText('Deuda mensual existente');
+    await userEvent.clear(debtInput);
+    await userEvent.type(debtInput, '100');
+    await userEvent.click(screen.getByText('Recalcular'));
+
+    expect(await screen.findByText(/Con este escenario, sí calificarías/)).toBeInTheDocument();
+    expect(onSimulated).toHaveBeenCalledWith('sim-2');
+  });
+});

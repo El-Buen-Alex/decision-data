@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ProtectedRoute } from '@/auth/protected-route';
 import { DiagnosticoPanel } from './diagnostico-panel';
+import { SimuladorPanel } from './simulador-panel';
+import { buttonVariants } from '@/components/ui/button';
 import { SimulationResponse, CreditProfile, MortgageGoal } from '@/api/types';
 
 interface DiagnosticoData {
@@ -13,6 +16,7 @@ interface DiagnosticoData {
 
 export default function CaminoPage(): JSX.Element {
   const [diagnosis, setDiagnosis] = useState<DiagnosticoData | null>(null);
+  const [chosenSimulationId, setChosenSimulationId] = useState<string | null>(null);
 
   return (
     <ProtectedRoute>
@@ -21,7 +25,15 @@ export default function CaminoPage(): JSX.Element {
         <div className="mt-6">
           <DiagnosticoPanel onDiagnosed={setDiagnosis} />
         </div>
-        {diagnosis && <p className="mt-4 text-fg-2">El simulador aparecerá aquí (Task 7).</p>}
+        {diagnosis && <SimuladorPanel baseline={diagnosis} onSimulated={setChosenSimulationId} />}
+        {chosenSimulationId && (
+          <Link
+            href={`/plan/nuevo?simulationId=${chosenSimulationId}`}
+            className={buttonVariants({ className: 'mt-6' })}
+          >
+            Crear plan con este escenario
+          </Link>
+        )}
       </main>
     </ProtectedRoute>
   );
