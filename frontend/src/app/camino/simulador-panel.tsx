@@ -9,6 +9,7 @@ import { CreditProfile, MortgageGoal, SimulationResponse } from '@/api/types';
 import { ApiError } from '@/api/api-error';
 import { ErrorState } from '@/components/state/error-state';
 import { LoadingState } from '@/components/state/loading-state';
+import { formatCurrency, formatPercent } from '@/lib/format';
 
 interface SimuladorPanelProps {
   baseline: { profile: CreditProfile; goal: MortgageGoal };
@@ -68,12 +69,28 @@ export function SimuladorPanel({ baseline, onSimulated }: SimuladorPanelProps): 
       {errorMessage && <ErrorState message={errorMessage} onRetry={handleRecalculate} />}
 
       {result && (
-        <p className="mt-4 font-medium">
-          {result.qualifiesToday
-            ? 'Con este escenario, sí calificarías.'
-            : 'Con este escenario, todavía no calificarías.'}{' '}
-          Probabilidad de aprobación: {result.approvalPercentage}%.
-        </p>
+        <div className="mt-4">
+          <p className="font-medium">
+            {result.qualifiesToday
+              ? 'Con este escenario, sí calificarías.'
+              : 'Con este escenario, todavía no calificarías.'}{' '}
+            Probabilidad de aprobación: {result.approvalPercentage}%.
+          </p>
+          <dl className="mt-3 flex flex-col gap-2 text-sm text-fg-2 sm:flex-row sm:gap-6">
+            <div>
+              <dt>Cuota sobre tu ingreso</dt>
+              <dd className="font-medium text-fg">{formatPercent(result.housingDtiRatio)}</dd>
+            </div>
+            <div>
+              <dt>Financiamiento sobre el inmueble</dt>
+              <dd className="font-medium text-fg">{formatPercent(result.ltv)}</dd>
+            </div>
+            <div>
+              <dt>Cuota mensual estimada</dt>
+              <dd className="font-medium text-fg">{formatCurrency(result.monthlyPayment)}</dd>
+            </div>
+          </dl>
+        </div>
       )}
     </section>
   );

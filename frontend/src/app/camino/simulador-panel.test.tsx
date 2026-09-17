@@ -44,4 +44,14 @@ describe('SimuladorPanel', () => {
     expect(await screen.findByText(/Con este escenario, sí calificarías/)).toBeInTheDocument();
     expect(onSimulated).toHaveBeenCalledWith('sim-2');
   });
+
+  it('shows the recalculated ratios and monthly payment behind the verdict', async () => {
+    render(<SimuladorPanel baseline={baseline} onSimulated={jest.fn()} />);
+
+    await userEvent.click(screen.getByText('Recalcular'));
+
+    expect(await screen.findByText('30%')).toBeInTheDocument();
+    expect(screen.getByText('75%')).toBeInTheDocument();
+    expect(screen.getByText('$400')).toBeInTheDocument();
+  });
 });
