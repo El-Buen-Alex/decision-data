@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/auth/protected-route';
+import { AppHeader } from '@/components/nav/app-header';
 import { useAuth } from '@/auth/use-auth';
 import { fetchRuleParameters, updateRuleParameter } from '@/api/underwriting-api';
 import { RuleParameter } from '@/api/types';
@@ -69,6 +70,7 @@ function ReglasContent(): JSX.Element {
 export default function ReglasPage(): JSX.Element {
   return (
     <ProtectedRoute>
+      <AppHeader />
       <main className="mx-auto max-w-3xl px-4 py-10">
         <h1 className="text-2xl font-semibold">Panel de reglas de elegibilidad</h1>
         <p className="mt-2 text-fg-2">

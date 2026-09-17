@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/auth/protected-route';
+import { AppHeader } from '@/components/nav/app-header';
 import { useAuth } from '@/auth/use-auth';
 import { fetchPlan } from '@/api/underwriting-api';
 import { PlanWithMilestones } from '@/api/types';
@@ -65,6 +66,7 @@ function PlanDetail({ planId }: { planId: string }): JSX.Element {
 export default function PlanPage({ params }: { params: { id: string } }): JSX.Element {
   return (
     <ProtectedRoute>
+      <AppHeader />
       <main className="mx-auto max-w-2xl px-4 py-10">
         <PlanDetail planId={params.id} />
       </main>
