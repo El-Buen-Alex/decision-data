@@ -44,4 +44,29 @@ describe('RuleParameterRow', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Ingresa un número válido.');
     expect(onSave).not.toHaveBeenCalled();
   });
+
+  it('rejects an empty value without calling onSave or leaking a backend validation message', async () => {
+    const onSave = jest.fn().mockResolvedValue(undefined);
+    render(<RuleParameterRow parameter={parameter} onSave={onSave} />);
+
+    const input = screen.getByLabelText('Valor de MAX_HOUSING_DTI_RATIO');
+    await userEvent.clear(input);
+    await userEvent.click(screen.getByText('Guardar'));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ingresa un número válido.');
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('rejects zero and negative values before calling onSave', async () => {
+    const onSave = jest.fn().mockResolvedValue(undefined);
+    render(<RuleParameterRow parameter={parameter} onSave={onSave} />);
+
+    const input = screen.getByLabelText('Valor de MAX_HOUSING_DTI_RATIO');
+    await userEvent.clear(input);
+    await userEvent.type(input, '0');
+    await userEvent.click(screen.getByText('Guardar'));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('El valor debe ser mayor a cero.');
+    expect(onSave).not.toHaveBeenCalled();
+  });
 });

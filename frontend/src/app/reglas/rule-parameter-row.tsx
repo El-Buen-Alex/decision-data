@@ -19,9 +19,14 @@ export function RuleParameterRow({ parameter, onSave }: RuleParameterRowProps): 
   async function handleSave(): Promise<void> {
     setErrorMessage(null);
 
-    const parsedValue = Number(value);
-    if (Number.isNaN(parsedValue)) {
+    const trimmedValue = value.trim();
+    const parsedValue = Number(trimmedValue);
+    if (trimmedValue === '' || Number.isNaN(parsedValue)) {
       setErrorMessage('Ingresa un número válido.');
+      return;
+    }
+    if (parsedValue <= 0) {
+      setErrorMessage('El valor debe ser mayor a cero.');
       return;
     }
 

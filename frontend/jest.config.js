@@ -2,6 +2,8 @@ module.exports = {
   testEnvironment: 'jsdom',
   preset: 'ts-jest',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  // e2e/ holds Playwright specs (run via `npx playwright test`), not Jest unit tests.
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/e2e/'],
   moduleNameMapper: {
     // Mirrors the "@/*" path alias from tsconfig.json, which ts-jest does not
     // resolve on its own.

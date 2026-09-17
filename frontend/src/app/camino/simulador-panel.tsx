@@ -20,6 +20,7 @@ export function SimuladorPanel({ baseline, onSimulated }: SimuladorPanelProps): 
   const { token } = useAuth();
   const [existingDebt, setExistingDebt] = useState(baseline.profile.existingMonthlyDebt);
   const [monthlyIncome, setMonthlyIncome] = useState(baseline.profile.monthlyIncome);
+  const [loanAmount, setLoanAmount] = useState(baseline.goal.desiredLoanAmount);
   const [result, setResult] = useState<SimulationResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -36,7 +37,7 @@ export function SimuladorPanel({ baseline, onSimulated }: SimuladorPanelProps): 
         adjustedExistingMonthlyDebt: Number(existingDebt),
         adjustedMonthlyIncome: Number(monthlyIncome),
         adjustedPropertyValue: Number(baseline.goal.propertyValue),
-        adjustedLoanAmount: Number(baseline.goal.desiredLoanAmount),
+        adjustedLoanAmount: Number(loanAmount),
         projectedScore: baseline.profile.score,
       });
       setResult(simulation);
@@ -59,6 +60,9 @@ export function SimuladorPanel({ baseline, onSimulated }: SimuladorPanelProps): 
 
         <label htmlFor="monthly-income">Ingreso mensual</label>
         <Input id="monthly-income" value={monthlyIncome} onChange={(e) => setMonthlyIncome(e.target.value)} />
+
+        <label htmlFor="loan-amount">Monto del préstamo (con más ahorro para la entrada, baja este monto)</label>
+        <Input id="loan-amount" value={loanAmount} onChange={(e) => setLoanAmount(e.target.value)} />
 
         <Button onClick={handleRecalculate} disabled={isSimulating}>
           {isSimulating ? 'Recalculando...' : 'Recalcular'}
