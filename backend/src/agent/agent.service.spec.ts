@@ -26,6 +26,7 @@ describe('AgentService', () => {
           useValue: {
             getSimulationById: jest.fn().mockResolvedValue({
               id: 'sim-1',
+              score: 640,
               scoreBand: ScoreBand.HIGH_RISK,
               housingDtiRatio: 0.46,
               totalDtiRatio: 0.5,
@@ -36,7 +37,6 @@ describe('AgentService', () => {
               qualifiesToday: false,
               createdAt: new Date(),
             }),
-            getProfile: jest.fn().mockResolvedValue({ score: 640 }),
           },
         },
         { provide: getRepositoryToken(AgentLog), useValue: { save: saveLogMock, create: (v: unknown) => v } },
@@ -58,5 +58,34 @@ describe('AgentService', () => {
     expect(result.text).toContain('640');
     expect(result.text).toContain('30%');
     expect(saveLogMock).toHaveBeenCalled();
+  });
+
+  it('rejects a response containing a literal digit outside a placeholder and logs it as invalid', async () => {
+    generateTemplateMock.mockResolvedValue(
+      'Hoy tu score es {{score}} y calificas para el 90% de aprobación.',
+    );
+
+    const result = await service.explainSimulation('user-1', 'sim-1');
+
+    expect(result.text).toBe(
+      'No se pudo generar una explicación en este momento. Por favor consulta los números en el panel de diagnóstico.',
+    );
+    expect(saveLogMock).toHaveBeenCalledWith(
+      expect.objectContaining({ validationPassed: false }),
+    );
+  });
+
+  it('resolves normally when digits only appear inside placeholder blocks', async () => {
+    generateTemplateMock.mockResolvedValue(
+      'Tu score es {{score}} y tu cuota mensual es {{monthlyPayment}}.',
+    );
+
+    const result = await service.explainSimulation('user-1', 'sim-1');
+
+    expect(result.text).toContain('640');
+    expect(result.text).toContain('550');
+    expect(saveLogMock).toHaveBeenCalledWith(
+      expect.objectContaining({ validationPassed: true }),
+    );
   });
 });

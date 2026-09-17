@@ -9,6 +9,7 @@ describe('AgentContextBuilderService', () => {
     const context = service.buildFromSimulation(
       {
         id: 'sim-1',
+        score: 640,
         scoreBand: ScoreBand.HIGH_RISK,
         housingDtiRatio: 0.4583,
         totalDtiRatio: 0.5,
