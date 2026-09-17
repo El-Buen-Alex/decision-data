@@ -20,7 +20,7 @@ export class LlmClientService {
       messages: [{ role: 'user', content: userPrompt }],
     });
 
-    const firstBlock = response.content[0];
-    return firstBlock.type === 'text' ? firstBlock.text : '';
+    const textBlock = response.content.find((block) => block.type === 'text');
+    return textBlock?.type === 'text' ? textBlock.text : '';
   }
 }
