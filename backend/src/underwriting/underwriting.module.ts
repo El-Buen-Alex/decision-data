@@ -5,6 +5,7 @@ import { MortgageGoal } from './entities/mortgage-goal.entity';
 import { Simulation } from './entities/simulation.entity';
 import { Plan } from './entities/plan.entity';
 import { Milestone } from './entities/milestone.entity';
+import { UnderwritingRuleParameter } from './entities/underwriting-rule-parameter.entity';
 import { RulesEngineModule } from '../rules-engine/rules-engine.module';
 import { AuthModule } from '../auth/auth.module';
 import { UnderwritingService } from './underwriting.service';
@@ -18,6 +19,7 @@ import { UnderwritingController } from './underwriting.controller';
       Simulation,
       Plan,
       Milestone,
+      UnderwritingRuleParameter,
     ]),
     RulesEngineModule,
     AuthModule,

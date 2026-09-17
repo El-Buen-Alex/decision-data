@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CreditProfile } from './entities/credit-profile.entity';
 import { MortgageGoal, PropertyType } from './entities/mortgage-goal.entity';
 import { Simulation } from './entities/simulation.entity';
+import { UnderwritingRuleParameter } from './entities/underwriting-rule-parameter.entity';
 import { RulesEngineService } from '../rules-engine/rules-engine.service';
 import { CreateSimulationDto } from './dto/create-simulation.dto';
 import { SimulationResponse } from './interfaces/simulation-response.interface';
@@ -17,6 +18,8 @@ export class UnderwritingService {
     private readonly mortgageGoalRepository: Repository<MortgageGoal>,
     @InjectRepository(Simulation)
     private readonly simulationRepository: Repository<Simulation>,
+    @InjectRepository(UnderwritingRuleParameter)
+    private readonly ruleParameterRepository: Repository<UnderwritingRuleParameter>,
     private readonly rulesEngineService: RulesEngineService,
   ) {}
 
@@ -94,5 +97,18 @@ export class UnderwritingService {
       where: { userId },
       order: { createdAt: 'DESC' },
     });
+  }
+
+  async listRuleParameters(): Promise<UnderwritingRuleParameter[]> {
+    return this.ruleParameterRepository.find({ order: { key: 'ASC' } });
+  }
+
+  async updateRuleParameter(key: string, value: number): Promise<UnderwritingRuleParameter> {
+    const parameter = await this.ruleParameterRepository.findOne({ where: { key } });
+    if (!parameter) {
+      throw new NotFoundException(`No existe el parámetro de reglas "${key}".`);
+    }
+    parameter.value = String(value);
+    return this.ruleParameterRepository.save(parameter);
   }
 }

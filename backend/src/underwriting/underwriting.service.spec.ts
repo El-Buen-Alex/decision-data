@@ -6,6 +6,7 @@ import { RulesEngineService } from '../rules-engine/rules-engine.service';
 import { CreditProfile, IncomeType } from './entities/credit-profile.entity';
 import { MortgageGoal, PropertyType } from './entities/mortgage-goal.entity';
 import { Simulation } from './entities/simulation.entity';
+import { UnderwritingRuleParameter } from './entities/underwriting-rule-parameter.entity';
 import { ApprovalCategory } from '../rules-engine/calculators/approval-probability.scorer';
 import { ScoreBand } from '../rules-engine/calculators/score-band.classifier';
 
@@ -33,6 +34,14 @@ describe('UnderwritingService', () => {
           useValue: {
             save: saveSimulationMock,
             create: (v: unknown) => v,
+            find: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(UnderwritingRuleParameter),
+          useValue: {
+            findOne: jest.fn(),
+            save: jest.fn(),
             find: jest.fn(),
           },
         },
@@ -102,5 +111,19 @@ describe('UnderwritingService', () => {
 
     expect(result.qualifiesToday).toBe(false);
     expect(saveSimulationMock).toHaveBeenCalled();
+  });
+
+  it('updates a rule parameter value by key', async () => {
+    const findOneParamMock = jest.fn().mockResolvedValue({ key: 'MAX_HOUSING_DTI_RATIO', value: '0.40' });
+    const saveParamMock = jest.fn().mockImplementation(async (entity) => entity);
+    (service as unknown as { ruleParameterRepository: unknown }).ruleParameterRepository = {
+      findOne: findOneParamMock,
+      save: saveParamMock,
+    };
+
+    const result = await service.updateRuleParameter('MAX_HOUSING_DTI_RATIO', 0.35);
+
+    expect(saveParamMock).toHaveBeenCalledWith(expect.objectContaining({ value: '0.35' }));
+    expect(result.value).toBe('0.35');
   });
 });
