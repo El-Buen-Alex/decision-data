@@ -4,12 +4,15 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiResponse } from '../interfaces/api-response.interface';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost): void {
     const httpContext = host.switchToHttp();
     const response = httpContext.getResponse<Response>();
@@ -18,6 +21,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const statusCode = isKnownHttpException
       ? exception.getStatus()
       : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    if (isKnownHttpException) {
+      this.logger.error(exception.message);
+    } else {
+      const stack = exception instanceof Error ? exception.stack : undefined;
+      this.logger.error('Unhandled exception', stack);
+    }
 
     const message = this.resolveMessage(exception, isKnownHttpException);
 
