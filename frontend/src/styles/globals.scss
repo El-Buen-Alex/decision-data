@@ -1,0 +1,15 @@
+@use 'sass:map';
+
+.roadmap-path {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 18px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--mist);
+  }
+}
