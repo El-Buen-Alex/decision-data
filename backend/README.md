@@ -73,3 +73,12 @@ El sistema de puntos que calcula la "probabilidad de aprobación" (`backend/src/
 - El modelo de aprobación y las bandas de score son ilustrativos (ver sección anterior), no el motor de riesgo real de Decision Data.
 - Sin integración real con bancos, BIESS o el buró real de Decision Data — todos los datos de crédito son sintéticos.
 - El agente depende de un proveedor LLM externo (Anthropic); no hay fallback si el proveedor falla.
+- CORS abierto (`*`) — aceptable para esta demo (JWT por header, sin cookies), debe fijarse antes de un despliegue real.
+- Migraciones de un solo paso (sin rollback probado más allá de `migration:revert`), y Dockerfiles de una sola etapa (simplicidad sobre tamaño de imagen).
+
+## Próximos pasos
+
+- Completar `/agent/ask` y `/agent/plan` reutilizando el mismo patrón ya probado en `/agent/explain`.
+- Reemplazar el modelo de aprobación ilustrativo por uno entrenado con datos reales (p. ej. un modelo de scoring supervisado) una vez existan datos históricos reales de originación.
+- Fijar CORS a un origen concreto y mover los Dockerfiles a build multi-etapa antes de cualquier despliegue productivo.
+- Un panel de "Mis planes" con varias metas/escenarios en paralelo por usuario (evaluado para esta entrega, no construido — ver `AI_USAGE.md`).

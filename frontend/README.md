@@ -23,8 +23,11 @@ La app queda en `http://localhost:3000`.
 ## Pruebas
 
 ```bash
-npm test
+npm test               # unitarios (Jest + Testing Library)
+npx playwright test    # E2E contra la app real corriendo (login → diagnóstico → simulador → plan → check-in → reglas)
 ```
+
+El recorrido completo end-to-end (Docker + Postgres real + un `ANTHROPIC_API_KEY` real, sin mocks) ya se verificó dos veces — ver `docs/test-plan.md` para el detalle y los bugs reales que esa verificación encontró.
 
 ## Recorrido de demostración
 
@@ -39,5 +42,12 @@ La paleta de color (tema "midnight") y el logo se obtuvieron directamente de `ht
 
 ## Limitaciones conocidas
 
-- El verificado manual end-to-end completo (login → diagnóstico → simulador → plan → edición de regla en vivo → explicación del agente con un LLM real) no pudo ejecutarse en este entorno de desarrollo: Docker Desktop no estaba disponible para levantar Postgres/el backend, y `backend/.env` todavía tiene un `ANTHROPIC_API_KEY` de placeholder. La cobertura de tests unitarios (Jest + React Testing Library, mockeando la API) y una verificación campo por campo del contrato de cada endpoint contra el código real del backend sustituyeron esa verificación en vivo. Antes de la entrega, se recomienda levantar `docker compose up -d` en `../infrastructure`, correr el backend, poner una API key real de Anthropic, y hacer el recorrido completo una vez en un navegador real.
 - Igual que el backend, `/agent/ask` y `/agent/plan` no están implementados — solo `/agent/explain`.
+- El texto del agente a veces cita un valor de enum sin traducir del contexto (p. ej. "se considera *low*" en vez de "*baja*") — un problema de redacción del prompt, no del mecanismo anti-alucinación en sí (ver `docs/test-plan.md` §7).
+- CORS está abierto (`Access-Control-Allow-Origin: *`) — aceptable para esta demo (JWT por header, sin cookies), debería fijarse a un origen concreto antes de cualquier despliegue real.
+
+## Próximos pasos
+
+- Un panel de "Mis planes" que liste varias metas/escenarios en paralelo, no solo el último plan creado (evaluado y descartado a favor del seguimiento por check-in para esta entrega — ver `AI_USAGE.md`).
+- Completar `/agent/ask` y `/agent/plan` reutilizando el mismo patrón (context builder → plantilla → resolutor anti-alucinación) ya probado en `/agent/explain`.
+- Pulir la redacción del prompt del agente para que nunca cite un valor de enum en inglés dentro de una respuesta en español.
