@@ -30,7 +30,7 @@ Diseño completo: [`docs/superpowers/specs/2026-09-16-decision-data-ruta-design.
 
 ## Cómo correrlo
 
-Con Docker (recomendado — levanta todo con datos de ejemplo ya cargados):
+Con Docker (recomendado):
 
 ```bash
 # 1. Base de datos
@@ -38,9 +38,19 @@ cd infrastructure
 cp .env.example .env
 docker compose up -d
 
-# 2. Backend + frontend (desde la raíz del repo)
+# 2. Backend: configurar variables de entorno
+cd ../backend
+cp .env.example .env
+# Editar backend/.env: reemplazar ANTHROPIC_API_KEY por una key real
+# (opcional — sin ella, todo funciona excepto /agent/explain)
+
+# 3. Backend + frontend (desde la raíz del repo)
 cd ..
 docker compose --env-file infrastructure/.env up -d --build
+
+# 4. Preparar la base de datos (una sola vez, dentro del contenedor ya construido)
+docker compose exec backend npm run migration:run
+docker compose exec backend npm run seed
 ```
 
 - Frontend: http://localhost:3000
