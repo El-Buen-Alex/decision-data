@@ -61,8 +61,10 @@ describe('MilestoneTimeline', () => {
   });
 
   it('shows a done milestone with the real date it was achieved instead of the target date', () => {
+    // El backend guarda completed_at como TIMESTAMP: llega como ISO datetime
+    // completo, no como la fecha "YYYY-MM-DD" que sí trae target_date.
     const doneMilestones: Milestone[] = [
-      { ...milestones[0], status: 'done', completedAt: '2026-10-01' },
+      { ...milestones[0], status: 'done', completedAt: '2026-10-01T14:32:07.123Z' },
     ];
     render(<MilestoneTimeline milestones={doneMilestones} />);
 

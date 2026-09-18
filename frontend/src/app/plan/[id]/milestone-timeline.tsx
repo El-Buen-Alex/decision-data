@@ -38,7 +38,7 @@ export function MilestoneTimeline({ milestones }: { milestones: Milestone[] }): 
             <p className="mt-1">{description}</p>
             <p className={`mt-1 text-sm font-medium ${isDone ? 'text-green-600' : 'text-fg-2'}`}>
               {isDone && milestone.completedAt
-                ? `Cumplido · ${formatLongDate(milestone.completedAt)}`
+                ? `Cumplido · ${formatLongDate(milestone.completedAt.slice(0, 10))}`
                 : 'Pendiente'}
             </p>
           </li>
